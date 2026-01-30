@@ -1,0 +1,4 @@
+# Core dependencies for AIOps Agent
+google-adk
+google-generativeai
+python-dotenv
