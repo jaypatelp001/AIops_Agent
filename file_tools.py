@@ -408,3 +408,60 @@ def list_codebase_files() -> str:
 
     except Exception as e:
         return f"Error listing codebase files: {str(e)}"
+
+
+def check_if_already_fixed() -> str:
+    """
+    Checks if the bug from trace.json has already been fixed.
+    Returns information about whether a fixed file exists.
+    """
+    print("🔍 [CHECK] Checking if bug is already fixed...")
+    try:
+        # First, find the error source file
+        error_analysis = find_error_source_file()
+        
+        if error_analysis.startswith("Error") or error_analysis.startswith("Could not"):
+            return error_analysis
+        
+        # Extract the source file path from the analysis
+        # Looking for pattern: "- Source file: codebase\..."
+        source_file = None
+        for line in error_analysis.split('\n'):
+            if '- Source file:' in line:
+                source_file = line.split('- Source file:')[1].strip()
+                break
+        
+        if not source_file:
+            return "Could not determine source file from analysis"
+        
+        # Construct the expected fixed file path
+        path_obj = Path(source_file)
+        directory = path_obj.parent
+        original_filename = path_obj.name
+        fixed_filename = f"fixed_{original_filename}"
+        fixed_file_path = directory / fixed_filename
+        
+        # Check if the fixed file exists
+        if fixed_file_path.exists():
+            result = f"""
+✅ [ALREADY FIXED] Bug has been fixed!
+- Original file: {source_file}
+- Fixed file: {fixed_file_path}
+- Status: Fixed file exists - no further action needed
+
+Return this message to the user: "Bug already fixed! Fixed file available at: {fixed_file_path}"
+"""
+            print(result)
+            return result
+        else:
+            result = f"""
+❌ [NOT FIXED] Bug not yet fixed
+- Original file: {source_file}
+- Expected fixed file: {fixed_file_path}
+- Status: Fixed file does not exist - analysis needed
+"""
+            print(result)
+            return result
+            
+    except Exception as e:
+        return f"Error checking if bug is fixed: {str(e)}"
